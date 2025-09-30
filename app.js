@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// API routes
 app.use('/api/forms', formRoutes);
 app.use('/api/responses', responseRoutes);
 
@@ -20,24 +21,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'public')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
-}
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-  });
-}
+// Handle React routing - this should be the last route
+app.get(/^(?!\/api).*/, (req, res) => {
+  // Serve React app for all non-API routes
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
